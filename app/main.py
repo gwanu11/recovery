@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.bot import start_bot
 from app.oauth import DiscordOAuth
@@ -14,7 +15,6 @@ from app.storage import UserStorage
 oauth = DiscordOAuth()
 storage = UserStorage()
 templates = Jinja2Templates(directory="templates")
-state_store: set[str] = set()
 
 
 @asynccontextmanager
@@ -24,6 +24,13 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Discord OAuth Recovery Bot", lifespan=lifespan)
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=oauth.settings.session_secret,
+    same_site="lax",
+    https_only=True,
+)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -43,26 +50,35 @@ async def health() -> dict[str, str]:
 
 
 @app.get("/login")
-async def login() -> RedirectResponse:
+async def login(request: Request) -> RedirectResponse:
     state = secrets.token_urlsafe(24)
-    state_store.add(state)
+    request.session["oauth_state"] = state
     auth_url = oauth.get_authorize_url(state)
     return RedirectResponse(url=auth_url, status_code=302)
 
 
 @app.get("/callback")
-async def callback(code: str | None = None, state: str | None = None, error: str | None = None):
+async def callback(
+    request: Request,
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+):
     if error:
         raise HTTPException(status_code=400, detail=f"OAuth error: {error}")
     if not code or not state:
         raise HTTPException(status_code=400, detail="Missing code or state")
-    if state not in state_store:
+
+    saved_state = request.session.get("oauth_state")
+    if not saved_state or state != saved_state:
         raise HTTPException(status_code=400, detail="Invalid state")
-    state_store.remove(state)
+
+    request.session.pop("oauth_state", None)
 
     token_data = await oauth.exchange_code(code)
     access_token = token_data.get("access_token")
     refresh_token = token_data.get("refresh_token")
+
     if not access_token:
         raise HTTPException(status_code=400, detail="No access token returned")
 
@@ -114,4 +130,11 @@ async def linked_users():
 async def debug_config():
     return {
         "redirect_uri": oauth.settings.discord_redirect_uri,
+    }
+
+
+@app.get("/debug-login-url")
+async def debug_login_url():
+    return {
+        "url": oauth.get_authorize_url("teststate"),
     }
