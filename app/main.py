@@ -48,7 +48,14 @@ async def home(request: Request):
 async def health() -> dict[str, str]:
     return {"status": "ok"}
 
-
+@app.get("/debug-db")
+async def debug_db():
+    return {
+        "db_path": str(storage.db_path),
+        "count": storage.count_users(),
+        "users": storage.get_all_users(),
+    }
+    
 @app.get("/login")
 async def login(request: Request) -> RedirectResponse:
     state = secrets.token_urlsafe(24)
