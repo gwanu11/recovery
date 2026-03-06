@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Discord OAuth Link Bot</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 24px; }
+    .btn { display: inline-block; padding: 12px 18px; background: #5865F2; color: white; text-decoration: none; border-radius: 8px; }
+    .muted { color: #666; }
+    code { background: #f3f3f3; padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Discord 계정 연결</h1>
+    <p>사용자가 자신의 Discord 계정을 직접 연결하는 OAuth2 예제입니다.</p>
+    <p><strong>현재 연결된 사용자 수:</strong> {{ linked_users }}</p>
+    <p><a class="btn" href="/login">Discord 계정 연결하기</a></p>
+    <p class="muted">헬스체크: <code>/health</code> / 연결 유저 목록: <code>/linked-users</code></p>
+  </div>
+</body>
+</html>
