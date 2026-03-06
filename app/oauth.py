@@ -33,8 +33,13 @@ class DiscordOAuth:
             "redirect_uri": self.settings.discord_redirect_uri,
         }
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
         async with httpx.AsyncClient(timeout=20.0) as client:
-            response = await client.post(f"{DISCORD_API_BASE}/oauth2/token", data=data, headers=headers)
+            response = await client.post(
+                f"{DISCORD_API_BASE}/oauth2/token",
+                data=data,
+                headers=headers,
+            )
             response.raise_for_status()
             return response.json()
 
@@ -46,15 +51,24 @@ class DiscordOAuth:
             "refresh_token": refresh_token,
         }
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
         async with httpx.AsyncClient(timeout=20.0) as client:
-            response = await client.post(f"{DISCORD_API_BASE}/oauth2/token", data=data, headers=headers)
+            response = await client.post(
+                f"{DISCORD_API_BASE}/oauth2/token",
+                data=data,
+                headers=headers,
+            )
             response.raise_for_status()
             return response.json()
 
     async def get_current_user(self, access_token: str) -> dict:
         headers = {"Authorization": f"Bearer {access_token}"}
+
         async with httpx.AsyncClient(timeout=20.0) as client:
-            response = await client.get(f"{DISCORD_API_BASE}/users/@me", headers=headers)
+            response = await client.get(
+                f"{DISCORD_API_BASE}/users/@me",
+                headers=headers,
+            )
             response.raise_for_status()
             return response.json()
 
@@ -64,6 +78,7 @@ class DiscordOAuth:
             "Content-Type": "application/json",
         }
         payload = {"access_token": access_token}
+
         async with httpx.AsyncClient(timeout=20.0) as client:
             response = await client.put(
                 f"{DISCORD_API_BASE}/guilds/{guild_id}/members/{user_id}",
